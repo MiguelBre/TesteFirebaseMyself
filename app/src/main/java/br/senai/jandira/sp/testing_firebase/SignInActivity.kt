@@ -1,5 +1,6 @@
 package br.senai.jandira.sp.testing_firebase
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -19,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.senai.jandira.sp.testing_firebase.ui.theme.Testing_FirebaseTheme
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
@@ -27,6 +29,13 @@ import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 class SignInActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val auth = FirebaseAuth.getInstance()
+        if (auth.currentUser != null){
+            val intent = Intent(this, HomeActivity::class.java)
+            startActivity(intent)
+        }
+
         setContent {
             Testing_FirebaseTheme {
                 // A surface container using the 'background' color from the theme
@@ -113,12 +122,8 @@ fun SignInActivityContent() {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Button(
                 onClick = {
-                    var result = accountCreate(emailState, passwordState)
-                    if (result != null)
-                        Toast.makeText(context, "Usuário Registrado", Toast.LENGTH_SHORT).show()
-                    else
-                        Toast.makeText(context, "Ocorreu um erro!", Toast.LENGTH_SHORT).show()
-                        
+                    accountCreate(emailState, passwordState)
+
                 },
                 colors = ButtonDefaults.buttonColors(colorResource(id = R.color.orange))
             ) {
