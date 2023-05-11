@@ -1,5 +1,6 @@
 package br.senai.jandira.sp.testing_firebase
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -25,15 +26,21 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 
 class SignInActivity : ComponentActivity() {
+
+    lateinit var auth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val auth = FirebaseAuth.getInstance()
+//        FirebaseApp.initializeApp(this)
+
+        auth = FirebaseAuth.getInstance()
         if (auth.currentUser != null){
-            val intent = Intent(this, HomeActivity::class.java)
-            startActivity(intent)
+            Log.i("success?", "Usuário já cadastrado")
         }
 
         setContent {
@@ -43,7 +50,7 @@ class SignInActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    SignInActivityContent()
+                    SignInActivityContent(auth)
                 }
             }
         }
@@ -51,15 +58,28 @@ class SignInActivity : ComponentActivity() {
 }
 
 @Composable
-fun SignInActivityContent() {
+fun SignInActivityContent(auth: FirebaseAuth) {
 
     val context = LocalContext.current
+
+
+
+    val storage = Firebase.storage("gs://teste---zerowaste.appspot.com")
+    val storageRef = storage.reference.child("images")
+
 
     var emailState by remember {
         mutableStateOf("")
     }
+    var emailError by remember{
+        mutableStateOf(false)
+    }
+
     var passwordState by remember {
         mutableStateOf("")
+    }
+    var passwordError by remember{
+        mutableStateOf(false)
     }
 
     Column(
@@ -86,6 +106,7 @@ fun SignInActivityContent() {
             )
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = emailState,
@@ -94,6 +115,7 @@ fun SignInActivityContent() {
             label = {
                 Text(text = "Email")
             },
+            isError = emailError,
             shape = RoundedCornerShape(10.dp),
             colors = TextFieldDefaults.textFieldColors(
                 focusedIndicatorColor = colorResource(id = R.color.light_orange),
@@ -103,6 +125,16 @@ fun SignInActivityContent() {
                 cursorColor = colorResource(id = R.color.light_orange)
             )
         )
+
+        if (emailError){
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Text(text = "Campo obrigatório!", color = Color.Red)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+        } else {
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+
         OutlinedTextField(
             value = passwordState,
             onValueChange = { passwordState = it },
@@ -110,6 +142,7 @@ fun SignInActivityContent() {
             label = {
                 Text(text = "Senha")
             },
+            isError = passwordError,
             shape = RoundedCornerShape(10.dp),
             colors = TextFieldDefaults.textFieldColors(
                 focusedIndicatorColor = colorResource(id = R.color.light_orange),
@@ -119,10 +152,29 @@ fun SignInActivityContent() {
                 cursorColor = colorResource(id = R.color.light_orange)
             )
         )
+
+        if (passwordError){
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Text(text = "Campo obrigatório!", color = Color.Red)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+        } else {
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Button(
                 onClick = {
-                    accountCreate(emailState, passwordState)
+
+                    emailError = emailState.isEmpty()
+                    passwordError = passwordState.isEmpty()
+
+                    if (!emailError && !passwordError){
+                        accountCreate(context, emailState, passwordState, auth)
+                    } else {
+                        Toast.makeText(context, "Campos Vazios", Toast.LENGTH_SHORT).show()
+                    }
+
 
                 },
                 colors = ButtonDefaults.buttonColors(colorResource(id = R.color.orange))
@@ -139,15 +191,15 @@ fun SignInActivityContent() {
 @Composable
 fun DefaultPreview() {
     Testing_FirebaseTheme {
-        SignInActivityContent()
+        SignInActivityContent(FirebaseAuth.getInstance())
     }
 }
 
-fun accountCreate(email: String, password: String) {
+fun accountCreate(context: Context, email: String, password: String, auth: FirebaseAuth) {
 
-    val auth = FirebaseAuth.getInstance()
+//    val auth = FirebaseAuth.getInstance()
 
-    var authTry = auth.createUserWithEmailAndPassword(email, password)
+    auth.createUserWithEmailAndPassword(email, password)
         .addOnSuccessListener {
             Log.i(
                 "ds3m", it.user!!.uid
