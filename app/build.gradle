@@ -61,11 +61,14 @@ dependencies {
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.1'
+
 
     //Firebase Dependencies
     implementation platform('com.google.firebase:firebase-bom:32.0.0')
     implementation 'com.google.firebase:firebase-analytics-ktx'
-    implementation 'com.google.firebase:firebase-auth:21.1.0'
+    implementation 'com.google.firebase:firebase-auth:21.0.1'
+
 
     //Firebase STORAGE
     implementation 'com.google.firebase:firebase-storage-ktx'

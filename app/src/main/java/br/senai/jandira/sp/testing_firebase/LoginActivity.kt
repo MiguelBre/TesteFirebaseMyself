@@ -1,14 +1,13 @@
 package br.senai.jandira.sp.testing_firebase
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,33 +15,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.semantics.Role.Companion.Button
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.senai.jandira.sp.testing_firebase.ui.theme.Testing_FirebaseTheme
-import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidUserException
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
 
-class SignInActivity : ComponentActivity() {
-
-    lateinit var auth: FirebaseAuth
-
+class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-//        FirebaseApp.initializeApp(this)
-
-        auth = FirebaseAuth.getInstance()
-        if (auth.currentUser != null){
-            Log.i("success?", "Usuário já cadastrado")
-        }
-
         setContent {
             Testing_FirebaseTheme {
                 // A surface container using the 'background' color from the theme
@@ -50,7 +34,7 @@ class SignInActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color.DarkGray
                 ) {
-                    SignInActivityContent(auth)
+                    LoginScreen()
                 }
             }
         }
@@ -58,35 +42,35 @@ class SignInActivity : ComponentActivity() {
 }
 
 @Composable
-fun SignInActivityContent(auth: FirebaseAuth) {
+fun LoginScreen() {
 
     val context = LocalContext.current
 
     var emailState by remember {
         mutableStateOf("")
     }
-    var emailError by remember{
+    var emailError by remember {
         mutableStateOf(false)
     }
 
     var passwordState by remember {
         mutableStateOf("")
     }
-    var passwordError by remember{
+    var passwordError by remember {
         mutableStateOf(false)
     }
 
-    Column(
+    Column (
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-    ) {
+            ){
 
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "Registro no ",
+                text = "Entrar no ",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -120,7 +104,7 @@ fun SignInActivityContent(auth: FirebaseAuth) {
             )
         )
 
-        if (emailError){
+        if (emailError) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Text(text = "Campo obrigatório!", color = Color.Red)
             }
@@ -147,7 +131,7 @@ fun SignInActivityContent(auth: FirebaseAuth) {
             )
         )
 
-        if (passwordError){
+        if (passwordError) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Text(text = "Campo obrigatório!", color = Color.Red)
             }
@@ -156,67 +140,45 @@ fun SignInActivityContent(auth: FirebaseAuth) {
             Spacer(modifier = Modifier.height(10.dp))
         }
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End){
             Button(
                 onClick = {
+                    FirebaseAuth.getInstance().signInWithEmailAndPassword(emailState, passwordState)
+                        .addOnSuccessListener {
+                            val toImageInput = Intent(context, ImageInputActivity::class.java)
+                            context.startActivity(toImageInput)
+                        }
+                },
+                colors = ButtonDefaults.buttonColors(colorResource(id = R.color.orange)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("Entrar")
+            }
+        }
 
-                    emailError = emailState.isEmpty()
-                    passwordError = passwordState.isEmpty()
-
-                    if (!emailError && !passwordError){
-                        accountCreate(context, emailState, passwordState, auth)
-                    } else {
-                        Toast.makeText(context, "Campos Vazios", Toast.LENGTH_SHORT).show()
-                    }
-
-
+        Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            Button(
+                onClick = {
+                    val intent = Intent(context, SignInActivity::class.java)
+                    context.startActivity(intent)
                 },
                 colors = ButtonDefaults.buttonColors(colorResource(id = R.color.orange))
             ) {
-                Text(text = "Registrar", color = Color.White)
+                Text("Registrar Conta")
             }
         }
 
     }
-
 }
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun DefaultPreview() {
+fun DefaultPreview3() {
     Testing_FirebaseTheme {
-        SignInActivityContent(FirebaseAuth.getInstance())
+        LoginScreen()
     }
-}
-
-fun accountCreate(context: Context, email: String, password: String, auth: FirebaseAuth) {
-
-//    val auth = FirebaseAuth.getInstance()
-
-    auth.createUserWithEmailAndPassword(email, password)
-        .addOnSuccessListener {
-            Log.i(
-                "ds3m", it.user!!.uid
-            )
-            val toImageInput = Intent(context, ImageInputActivity::class.java)
-            context.startActivity(toImageInput)
-        }
-        .addOnFailureListener { error ->
-            try {
-                throw error
-            } catch (e: FirebaseAuthUserCollisionException) {
-                Log.i("ds3m", "Esse email já existe!")
-                Log.i("ds3m", "${e.message}")
-            } catch (e: FirebaseAuthWeakPasswordException) {
-                Log.i("ds3m", "Senha fraca!")
-                Log.i("ds3m", "${e.message}")
-            } catch (e: FirebaseAuthInvalidUserException) {
-                Log.i("ds3m", "Usuário inválido!")
-                Log.i("ds3m", "${e.message}")
-            } catch (e: Exception) {
-                Log.i("ds3m", "Algo deu errado ;-;!")
-                Log.i("ds3m", "${e.message}")
-            }
-        }
-    
 }

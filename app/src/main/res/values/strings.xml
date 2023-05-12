@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Testing_Firebase</string>
     <string name="title_activity_image_input">ImageInputActivity</string>
+    <string name="title_activity_login">LoginActivity</string>
 </resources>
